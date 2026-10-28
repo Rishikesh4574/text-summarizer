@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff5ea;
+            color: #222;
+        }
+
+        .container {
+            max-width: 620px;
+            margin: 40px auto;
+            padding: 36px 26px 28px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
+        }
+
+        h1 {
+            text-align: center;
+            color: #f08038;
+            font-size: 38px;
+            margin: 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 6px 0 36px;
+        }
+
+        .intro {
+            font-size: 18px;
+            margin: 0 0 14px;
+        }
+
+        textarea {
+            display: block;
+            width: 100%;
+            height: 220px;
+            padding: 12px 14px;
+            font-family: Menlo, Consolas, "Courier New", monospace;
+            font-size: 16px;
+            color: #222;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #f08038;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            margin-top: 18px;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            background-color: #f08038;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #dc6e27;
+        }
+
+        button:focus-visible {
+            outline: 3px solid #222;
+            outline-offset: 2px;
+        }
+
+        button:disabled {
+            background-color: #f5b388;
+            cursor: wait;
+        }
+
+        /* peach summary box */
+        .summary-output {
+            margin-top: 22px;
+            padding: 20px 18px;
+            background-color: #fbe9d5;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            min-height: 88px;
+        }
+
+        .summary-output h2 {
+            text-align: center;
+            font-size: 24px;
+            margin: 0;
+        }
+
+        #summary-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin: 14px 0 0;
+            text-align: left;
+        }
+
+        #summary-text:empty {
+            display: none;
+        }
+
+        #summary-text.loading {
+            color: #777;
+            text-align: center;
+        }
+
+        #summary-text.error {
+            color: #b42318;
+        }
+
+        @media (max-width: 680px) {
+            .container {
+                margin: 16px 12px;
+                padding: 28px 16px 22px;
+            }
+
+            h1 {
+                font-size: 30px;
+            }
+
+            .subtitle {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Text Summarizer</h1>
+        <div class="subtitle">using HuggingFace Transformer</div>
+
+        <p class="intro">Write or Paste your content below for quick summarization.</p>
+
+        <form id="summarization-form">
+            <textarea id="dialogue-input" placeholder="Enter your content here..." required></textarea>
+            <button type="submit" id="summarize-btn">Summarize</button>
+        </form>
+
+        <div class="summary-output">
+            <h2 id="summary-heading">Content Summary</h2>
+            <p id="summary-text" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("summarization-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const dialogueInput = document.getElementById("dialogue-input");
+            const summaryText = document.getElementById("summary-text");
+            const submitButton = e.target.querySelector("button");
+
+            const dialogue = dialogueInput.value.trim();
+            if (!dialogue) {
+            summaryText.innerText = "Please enter some text first.";
+            return;
+            }
+
+            summaryText.innerText = "Processing...";
+            submitButton.disabled = true;
+
+            try {
+            const response = await fetch("/summarize/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ dialogue }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            summaryText.innerText = data.summary || "No summary returned.";
+            } catch (err) {
+            summaryText.innerText = `Error: ${err.message}`;
+            } finally {
+            submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
